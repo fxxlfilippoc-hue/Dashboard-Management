@@ -275,8 +275,8 @@ function q(id){ return document.getElementById(id); }
 function N(v){
   if(v===null||v===undefined) return 0;
   var s=String(v).trim();
-  if(s===''||s==='-'||s==='#N/V'||s==='#WERT!') return 0;
-  s=s.replace(/\./g,'').replace(',','.');
+  if(s===''||s==='-'||s==='#N/V'||s==='#WERT!'||s==='Kein Verkauf') return 0;
+  s=s.replace(/,/g,'.');
   var n=parseFloat(s);
   return isNaN(n)?0:n;
 }
