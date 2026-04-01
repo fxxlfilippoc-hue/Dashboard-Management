@@ -160,6 +160,10 @@ function checkPw(){
   </div>
 
   <div id="dash">
+  <div id="loading-indicator" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#1a1d23;color:#fff;padding:14px 28px;border-radius:30px;font-size:14px;font-weight:600;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.3)">
+    <span style="font-size:18px;animation:spin 1s linear infinite;display:inline-block">⏳</span>
+    <span>Wird gefiltert…</span>
+  </div>
     <div class="ctrl gap">
       <div class="row1">
         <div class="cg cg-w"><label>🔍 Globale Suche</label><input id="sg" placeholder="Suche in allen Spalten…"></div>
@@ -447,7 +451,7 @@ function renderKPIs(){
   var a7 =sumArr(d.map(function(r){ return N(r['Absatz_7T']); }));
   var a12=sumArr(d.map(function(r){ return N(r['Absatz_Variabel']); }));
   var lw =sumArr(d.map(function(r){ return N(r['Lagerwert']); }));
-  var rm =avgArr(d.map(function(r){ return N(r['Reichweite MONATE']); }));
+  var rm =avgArr(d.map(function(r){ return N(r['Reichweite_MONATE']); }));
   var ret=avgArr(d.map(function(r){ return N(r['Retourquote']); }))*100;
   var bst=sumArr(d.map(function(r){ return N(r['Bestand_verfügbar']); }));
   var inAuftrag=sumArr(d.map(function(r){ return N(r['In Auftrag']); }));
@@ -464,7 +468,7 @@ function renderKPIs(){
     {l:'Absatz 30 Tage',     v:fmtN(a30)+' Stk.',     s:'7T: '+fmtN(a7)+' Stück', c:'var(--blue)',tr:momTxt,tc:momCls},
     {l:'Absatz 12 Monate',   v:fmtN(a12)+' Stk.',     s:'Absatz_Variabel',        c:'var(--blue)'},
     {l:'Lagerwert',          v:fmtE(lw),              s:'Gesamter Lagerwert',     c:'var(--amber)'},
-    {l:'Ø Lagerreichweite',  v:fmtN(rm,1)+' Monate',  s:'Reichweite MONATE',      c:rm>6?'var(--red)':rm>3?'var(--amber)':'var(--green)'},
+    {l:'Ø Lagerreichweite',  v:fmtN(rm,1)+' Monate',  s:'Reichweite_MONATE',      c:rm>6?'var(--red)':rm>3?'var(--amber)':'var(--green)'},
     {l:'Ø Retourquote',      v:fmtP(ret),             s:'Retourquote',            c:ret>10?'var(--red)':ret>5?'var(--amber)':'var(--green)'},
     {l:'Bestand_verfügbar',  v:fmtN(bst),             s:'Stück gesamt',           c:'var(--blue)'},
     {l:'Menge in Auftrag',   v:fmtN(inAuftrag),       s:'In Auftrag',             c:'var(--amber)'},
