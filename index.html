@@ -298,6 +298,7 @@ q('logo-in').onchange=function(e){
 // ── CSV LADEN ────────────────────────────────────────────
 async function loadCSV() {
   var uz = q('upload-zone');
+  window._uz = uz;
   try {
     uz.innerHTML = '<div style="padding:50px;color:#9ca3af;text-align:center;font-size:15px">⏳ Daten werden geladen…</div>';
     var res = await fetch('./import_fertig.csv');
@@ -335,7 +336,8 @@ function init(data,fname){
   q('data-info').textContent=ALL.length.toLocaleString('de-DE')+' Artikel · '+fname;
   buildFilters();
   applyFilters();
-  uz.style.display='none';
+  var uz = window._uz || q('upload-zone');
+  if(uz) uz.style.display='none';
   q('dash').style.display='block';
 }
 
