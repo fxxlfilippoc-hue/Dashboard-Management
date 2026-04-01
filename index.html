@@ -451,10 +451,10 @@ function renderKPIs(){
   var a7 =sumArr(d.map(function(r){ return N(r['Absatz_7T']); }));
   var a12=sumArr(d.map(function(r){ return N(r['Absatz_Variabel']); }));
   var lw =sumArr(d.map(function(r){ return N(r['Lagerwert']); }));
-  var rm =avgArr(d.map(function(r){ return N(r['Reichweite_MONATE']); }));
+  var bst=sumArr(d.map(function(r){ return N(r['Bestand_verfügbar']); }));
+  var rm=a30>0?(bst/a30):0;  // Reichweite = Bestand / Absatz 30T (in Monaten)
   var retVals=d.map(function(r){ return N(r['Retourquote']); }).filter(function(v){ return v>0; });
   var ret=retVals.length>0?(retVals.reduce(function(a,b){return a+b;},0)/retVals.length)*100:0;
-  var bst=sumArr(d.map(function(r){ return N(r['Bestand_verfügbar']); }));
   var inAuftrag=sumArr(d.map(function(r){ return N(r['In_Auftrag']); }));
   var modelle=Object.keys(d.reduce(function(acc,r){ var m=String(r['Modellnummer']||'').trim(); if(m) acc[m]=1; return acc; },{})).length;
   var mom=a30>0?(a7/(a30/4.33))*100:0;
@@ -466,12 +466,12 @@ function renderKPIs(){
     {l:'Umsatz 12 Monate',   v:fmtE(u12),             s:'Umsatz Variabel',        c:'var(--red)'},
     {l:'Deckungsbeitrag',    v:fmtE(db),              s:'Summe DB_Var (€)',       c:'var(--green)'},
     {l:'Ø DB-Marge',         v:fmtP(dbp),             s:'DB / Umsatz berechnet',  c:dbp>30?'var(--green)':dbp>15?'var(--amber)':'var(--red)'},
+    {l:'Bestand',            v:fmtN(bst),             s:'Stück gesamt',           c:'var(--blue)'},
     {l:'Absatz 30 Tage',     v:fmtN(a30)+' Stk.',     s:'7T: '+fmtN(a7)+' Stück', c:'var(--blue)',tr:momTxt,tc:momCls},
     {l:'Absatz 12 Monate',   v:fmtN(a12)+' Stk.',     s:'Absatz_Variabel',        c:'var(--blue)'},
+    {l:'Lagerreichweite',    v:fmtN(rm,1)+' Monate',  s:'Bestand / Absatz 30T',   c:rm>6?'var(--red)':rm>3?'var(--amber)':'var(--green)'},
     {l:'Lagerwert',          v:fmtE(lw),              s:'Gesamter Lagerwert',     c:'var(--amber)'},
-    {l:'Ø Lagerreichweite',  v:fmtN(rm,1)+' Monate',  s:'Reichweite_MONATE',      c:rm>6?'var(--red)':rm>3?'var(--amber)':'var(--green)'},
     {l:'Ø Retourquote',      v:fmtP(ret),             s:'Retourquote',            c:ret>10?'var(--red)':ret>5?'var(--amber)':'var(--green)'},
-    {l:'Bestand_verfügbar',  v:fmtN(bst),             s:'Stück gesamt',           c:'var(--blue)'},
     {l:'Menge in Auftrag',   v:fmtN(inAuftrag),       s:'In_Auftrag',             c:'var(--amber)'},
     {l:'Modelle',            v:fmtN(modelle),          s:'verschiedene Modellnr.', c:'var(--muted)'},
     {l:'Artikel',            v:fmtN(d.length),         s:'gefilterte Datensätze',  c:'var(--muted)'},
