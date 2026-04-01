@@ -295,37 +295,31 @@ q('logo-in').onchange=function(e){
   r.readAsDataURL(f);
 };
 
-// ── SUPABASE LADEN ────────────────────────────────────────
-var SUPABASE_URL = 'https://kclbwtzvdbepyexkfrag.supabase.co';
-var SUPABASE_KEY = 'sb_publishable_j5kg6P3GrF4iV9jzw5Q0pg_D599x14N';
-
-async function loadSupabase() {
+// ── CSV LADEN ────────────────────────────────────────────
+async function loadCSV() {
   var uz = q('upload-zone');
-  var allRows = [];
-  var page = 0;
-  var pageSize = 1000;
   try {
-    while(true) {
-      var from = page * pageSize;
-      var to = from + pageSize - 1;
-      var res = await fetch(
-        SUPABASE_URL + '/rest/v1/import?select=*&offset=' + from + '&limit=' + pageSize,
-        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-      );
-      if(!res.ok) throw new Error('HTTP ' + res.status);
-      var rows = await res.json();
-      if(!rows.length) break;
-      allRows = allRows.concat(rows);
-      if(rows.length < pageSize) break;
-      page++;
-    }
-    if(!allRows.length) throw new Error('Keine Daten gefunden');
-    init(allRows, 'Supabase · import');
+    uz.innerHTML = '<div style="padding:50px;color:#9ca3af;text-align:center;font-size:15px">⏳ Daten werden geladen…</div>';
+    var res = await fetch('./import_fertig.csv');
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    var text = await res.text();
+    Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: false,
+      complete: function(result) {
+        if(!result.data.length) throw new Error('Keine Daten gefunden');
+        init(result.data, 'import_fertig.csv');
+      },
+      error: function(err) {
+        uz.innerHTML = '<div style="padding:50px;color:#e30613;text-align:center;font-size:15px">❌ Fehler: ' + err.message + '</div>';
+      }
+    });
   } catch(err) {
     uz.innerHTML = '<div style="padding:50px;color:#e30613;text-align:center;font-size:15px">❌ Fehler beim Laden: ' + err.message + '</div>';
   }
 }
-loadSupabase();
+loadCSV();
 
 function init(data,fname){
   _pcMult=null;
