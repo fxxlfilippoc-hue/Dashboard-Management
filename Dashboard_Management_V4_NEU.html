@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Fahrrad XXL · Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0f2f5;--card:#fff;--border:#e2e6ea;
+  --text:#1a1d23;--muted:#6b7280;--subtle:#9ca3af;
+  --red:#e30613;--red-l:#fef2f2;
+  --green:#16a34a;--green-l:#f0fdf4;
+  --amber:#d97706;--amber-l:#fffbeb;
+  --blue:#2563eb;--blue-l:#eff6ff;
+  --r:12px;--sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);--sh2:0 4px 12px rgba(0,0,0,.08)
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+header{background:#fff;border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--sh)}
+.hdr-l{display:flex;align-items:center;gap:16px}
+#logo-img{max-height:40px;max-width:180px;object-fit:contain;display:none}
+.logo-fb .t1{font-size:22px;font-weight:900;font-style:italic;line-height:1;color:#1a1d23}
+.logo-fb .t1 b{color:var(--red)}
+.logo-fb .t2{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#9ca3af;margin-top:1px}
+.hdr-div{width:1px;height:32px;background:var(--border)}
+.hdr-ttl{font-size:15px;font-weight:600;color:var(--muted)}
+.hdr-r{display:flex;align-items:center;gap:12px}
+#data-info{font-size:12px;color:var(--subtle);background:#f9fafb;padding:5px 12px;border-radius:20px;border:1px solid var(--border)}
+.lbl-btn{font-size:12px;padding:6px 14px;background:#fff;border:1px solid var(--border);border-radius:7px;color:var(--muted);cursor:pointer;font-weight:500}
+.lbl-btn:hover{border-color:#aaa;color:var(--text)}
+.wrap{padding:20px 28px;max-width:1800px;margin:0 auto}
+#upload-zone{background:#fff;border:2px dashed #d1d5db;border-radius:var(--r);padding:72px 40px;text-align:center;cursor:pointer;transition:.2s;box-shadow:var(--sh)}
+#upload-zone:hover{border-color:var(--red);background:var(--red-l)}
+#upload-zone h2{font-size:20px;font-weight:700;margin-bottom:8px}
+#upload-zone p{color:var(--muted);font-size:14px;margin-bottom:18px}
+.btn-up{display:inline-block;padding:11px 28px;background:var(--red);color:#fff;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer}
+#dash{display:none}
+.gap{margin-bottom:16px}
+.sec-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--subtle);margin-bottom:10px}
+.ctrl{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)}
+.row1{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end}
+.row2{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.cg label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px}
+.cg input,.cg select{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;background:#fff;color:var(--text);font-size:13px;outline:none;transition:.15s}
+.cg input:focus,.cg select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,6,19,.08)}
+.cg-w{flex:2;min-width:200px}.cg-m{flex:1;min-width:130px}
+.btn-rst{padding:8px 16px;background:#f9fafb;border:1.5px solid var(--border);border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap;font-weight:500}
+.btn-rst:hover{background:#f3f4f6;color:var(--text)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);position:relative;overflow:hidden;transition:.15s}
+.kpi:hover{box-shadow:var(--sh2);transform:translateY(-1px)}
+.kpi-accent{position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,#e2e6ea);border-radius:var(--r) var(--r) 0 0}
+.kpi-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;margin-top:4px}
+.kpi-val{font-size:26px;font-weight:800;letter-spacing:-.5px;color:var(--text);line-height:1}
+.kpi-sub{font-size:12px;color:var(--subtle);margin-top:5px}
+.kpi-tr{font-size:12px;font-weight:700;margin-top:5px;display:inline-block;padding:2px 8px;border-radius:20px}
+.up{color:var(--green);background:var(--green-l)}.dn{color:var(--red);background:var(--red-l)}.neu{color:var(--amber);background:var(--amber-l)}
+.ch2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.ch2{grid-template-columns:1fr}}
+.cc{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh)}
+.cct{font-size:14px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.ccs{font-size:12px;color:var(--subtle);margin-bottom:14px}
+.cw{position:relative;height:210px}.cw-lg{position:relative;height:255px}
+.top3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:1100px){.top3{grid-template-columns:1fr 1fr}}
+@media(max-width:660px){.top3{grid-template-columns:1fr}}
+.tc{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:0 8px 10px;border-bottom:2px solid var(--border)}
+tbody td{padding:9px 8px;border-bottom:1px solid #f3f4f6;vertical-align:middle;color:var(--text)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#f9fafb}
+.rk{display:inline-flex;width:20px;height:20px;border-radius:5px;font-size:11px;font-weight:800;align-items:center;justify-content:center;background:#f3f4f6;color:var(--muted)}
+.rk.r1{background:#fef3c7;color:#92400e}.rk.r2{background:#f3f4f6;color:#6b7280}.rk.r3{background:#f9fafb;color:#9ca3af}
+.bdg{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.bg{background:#dcfce7;color:#15803d}.br{background:#fee2e2;color:#b91c1c}.by{background:#fef3c7;color:#92400e}.bx{background:#f3f4f6;color:#6b7280}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.det{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+.det-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.det-hdr:hover{background:#fafafa}
+.det-hdr-l{display:flex;align-items:center;gap:10px}
+.det-hdr h3{font-size:14px;font-weight:700}
+#rcnt{font-size:12px;color:var(--subtle);background:#f3f4f6;padding:3px 10px;border-radius:20px}
+.det-hdr-r{display:flex;gap:8px}
+.btn-dl{padding:6px 14px;background:#f9fafb;border:1.5px solid var(--border);border-radius:7px;font-size:12px;color:var(--muted);cursor:pointer;font-weight:500}
+.btn-dl:hover{background:#f3f4f6;color:var(--text)}
+.chev{font-size:12px;color:var(--subtle);transition:.25s;display:inline-block}
+.chev.open{transform:rotate(180deg)}
+.det-body{overflow:hidden;transition:max-height .3s ease}
+.det-scroll{overflow-x:auto;max-height:420px;overflow-y:auto}
+.det-scroll thead{position:sticky;top:0;z-index:2}
+.det-scroll thead th{background:#fff}
+th.S{cursor:pointer}.S:hover{color:var(--red)}
+.S::after{content:' ↕';opacity:.25;font-size:9px}
+.sa::after{content:' ↑';opacity:1;color:var(--red)}.sd::after{content:' ↓';opacity:1;color:var(--red)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#f1f1f1}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hdr-l">
+    <img id="logo-img" alt="Logo">
+    <div class="logo-fb" id="logo-fb">
+      <div class="t1">Fahrrad <b>XXL</b></div>
+      <div class="t2">Deutschlands größte Auswahl</div>
+    </div>
+    <div class="hdr-div"></div>
+    <span class="hdr-ttl">Management Dashboard</span>
+  </div>
+  <div class="hdr-r">
+    <span id="data-info">Keine Daten geladen</span>
+    <label class="lbl-btn">🖼 Logo hochladen<input type="file" id="logo-in" accept="image/*" style="display:none"></label>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="upload-zone">
+    <h2>⏳ Daten werden geladen…</h2>
+    <p>Verbindung zu Supabase wird hergestellt</p>
+  </div>
+
+  <div id="dash">
+    <div class="ctrl gap">
+      <div class="row1">
+        <div class="cg cg-w"><label>🔍 Globale Suche</label><input id="sg" placeholder="Suche in allen Spalten…"></div>
+        <div class="cg cg-m"><label>Artikelnummer</label><input id="sa" placeholder="z.B. 10001"></div>
+        <div class="cg cg-m"><label>EAN</label><input id="se" placeholder="z.B. 40545…"></div>
+        <div class="cg cg-m"><label>Modellnummer</label><input id="sm" placeholder="z.B. CUBE-RHP500"></div>
+        <button class="btn-rst" onclick="resetAll()">↺ Zurücksetzen</button>
+      </div>
+      <div class="row2" id="fc"></div>
+    </div>
+
+    <div class="sec-lbl">Kennzahlen</div>
+    <div class="kpi-grid gap" id="kg"></div>
+
+    <div class="sec-lbl" style="margin-top:6px">Umsatz-Übersicht</div>
+    <div class="ch2 gap">
+      <div class="cc">
+        <div class="cct">Top Marken — Umsatz 12 Monate</div>
+        <div class="ccs">Umsatz_Var gruppiert nach Marke</div>
+        <div class="cw"><canvas id="cBrands"></canvas></div>
+      </div>
+      <div class="cc">
+        <div class="cct">Umsatz nach Warengruppe — 30 Tage</div>
+        <div class="ccs">Netto_Umsatz_30_Tage gruppiert nach Warengruppe</div>
+        <div class="cw"><canvas id="cWG"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sec-lbl">Trend & Absatz-Analyse</div>
+    <div class="ch2 gap">
+      <div class="cc">
+        <div class="cct">🔥 Trendprodukte — Absatz-Momentum</div>
+        <div class="ccs">Absatz_7T relativ zum 30T-Durchschnitt — Grün >110% = beschleunigt</div>
+        <div class="cw-lg"><canvas id="cTrend"></canvas></div>
+      </div>
+      <div class="cc">
+        <div class="cct">Absatz-Vergleich 7T / 30T / 12M</div>
+        <div class="ccs">Top 10 Modelle nach Umsatz 12M</div>
+        <div class="cw-lg"><canvas id="cComp"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sec-lbl">Top Produkte</div>
+    <div class="top3 gap">
+      <div class="tc">
+        <div class="cct">🏆 Top Umsatz</div>
+        <div class="ccs" style="margin-bottom:10px">Sortiert nach Umsatz 12 Monate</div>
+        <table id="tU"><thead><tr><th>#</th><th>Bezeichnung</th><th>Marke</th><th>Umsatz</th><th>Absatz</th><th>Marge</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="tc">
+        <div class="cct">📦 Top Absatz</div>
+        <div class="ccs" style="margin-bottom:10px">Sortiert nach Absatz 12 Monate</div>
+        <table id="tA"><thead><tr><th>#</th><th>Bezeichnung</th><th>Marke</th><th>Umsatz</th><th>Absatz</th><th>Marge</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="tc">
+        <div class="cct">💹 Top Marge</div>
+        <div class="ccs" style="margin-bottom:10px">Sortiert nach DB% (nur mit Umsatz)</div>
+        <table id="tM"><thead><tr><th>#</th><th>Bezeichnung</th><th>Marke</th><th>Umsatz</th><th>Absatz</th><th>Marge</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div class="sec-lbl">Detailtabelle</div>
+    <div class="det gap">
+      <div class="det-hdr" onclick="toggleDet()">
+        <div class="det-hdr-l">
+          <span class="chev open" id="chev">▼</span>
+          <h3>Alle Artikel</h3>
+          <span id="rcnt">0 Artikel</span>
+        </div>
+        <div class="det-hdr-r" onclick="event.stopPropagation()">
+          <button class="btn-dl" onclick="dlCSV()">⬇ CSV Export</button>
+        </div>
+      </div>
+      <div class="det-body" id="detBody">
+        <div class="det-scroll">
+          <table id="tD">
+            <thead><tr>
+              <th class="S" data-c="Artikelnummer">Artikelnr.</th>
+              <th class="S" data-c="Bezeichnung">Bezeichnung</th>
+              <th class="S" data-c="Modellnummer">Modell</th>
+              <th class="S" data-c="Marke">Marke</th>
+              <th class="S" data-c="Farbe">Farbe</th>
+              <th class="S" data-c="Warengruppe">Warengruppe</th>
+              <th class="S" data-c="Netto_Umsatz_30_Tage">Umsatz 30T</th>
+              <th class="S" data-c="Umsatz_Var">Umsatz 12M</th>
+              <th class="S" data-c="Absatz_30T">Absatz_30T</th>
+              <th class="S" data-c="Absatz_Variabel">Absatz 12M</th>
+              <th class="S" data-c="Absatz_7T">Absatz_7T</th>
+              <th class="S" data-c="DB_Var">DB Marge</th>
+              <th class="S" data-c="Lagerwert">Lagerwert</th>
+              <th class="S" data-c="Bestand_verfügbar">Bestand</th>
+              <th data-c="Online_Status">Status</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var ALL=[], FIL=[], sortC='', sortD=-1, detOpen=true;
+var CH={};
+
+function q(id){ return document.getElementById(id); }
+
+// ── NUMBER PARSING ────────────────────────────────────────
+function N(v){
+  if(v===null||v===undefined) return 0;
+  var s=String(v).trim();
+  if(s===''||s==='-'||s==='#N/V'||s==='#WERT!') return 0;
+  s=s.replace(/\./g,'').replace(',','.');
+  var n=parseFloat(s);
+  return isNaN(n)?0:n;
+}
+
+// Marge berechnet aus DB / Umsatz (nicht aus CSV-Spalte)
+function calcMarge(db, umsatz){
+  return umsatz>0 ? (db/umsatz)*100 : 0;
+}
+
+var _pcMult=null;
+function getPcMult(){
+  if(_pcMult!==null) return _pcMult;
+  var sample=ALL.slice(0,50).map(function(r){ return N(r['DB % Var.']); }).filter(function(v){ return v!==0; });
+  if(!sample.length){ _pcMult=100; return 100; }
+  var a=sample.reduce(function(s,v){ return s+v; },0)/sample.length;
+  _pcMult=a>1?1:100;
+  return _pcMult;
+}
+
+var fmtN=function(n,d){ d=d||0; return n.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}); };
+var fmtE=function(n){ return '€\u202f'+fmtN(n,0); };
+var fmtP=function(n){ return fmtN(n,1)+'\u202f%'; };
+function sumArr(a){ return a.reduce(function(s,v){ return s+v; },0); }
+function avgArr(a){ return a.length?sumArr(a)/a.length:0; }
+
+var PAL=['#e30613','#2563eb','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d','#ea580c','#0284c7','#9333ea','#059669'];
+
+// ── WARENGRUPPEN CLUSTER ──────────────────────────────────
+var WG_MAP={
+  'Fahrräder':['F001','F002','F003','F004','F005','F006','F007','F008','F009','F010','F011','F012','F013','F015','F020','F099','R026'],
+  'E-Bikes':['F014','F101','F102','F103','F104','F105','F106','F107','F108','F109','F112','F113','F115','F120','F199'],
+  'Fahrradanhänger':['Z161','Z162','Z163','Z168','Z169'],
+  'Fahrradträger':['R011','R012','R013','R014','R019'],
+  'Bekleidung':['B011','B012','B013','B015','B016','B017','B021','B022','B023','B025','B031','B041','B042','B043','B044','B051','B061','B065','B071','B081','B082','B091','B092','B111','B119','B122','B123','B125','B127','B131','B141','B143','B151','B152','B153','B154'],
+  'Teile':['T011','T012','T013','T014','T015','T016','T019','T021','T022','T023','T029','T031','T032','T033','T034','T035','T036','T037','T039','T041','T042','T043','T044','T046','T049','T051','T052','T053','T055','T061','T062','T063','T064','T065','T069','T071','T072','T073','T079','T081','T082','T083','T088','T089','T091','T092','T093','T094','T095','T096','T097','T098','T101','T103','T105','T106','T107','T108','T109','T111','T112','T113','T114','T115','T119','T121','T122','T131','T135','T999'],
+  'Fahrradzubehör':['Z011','Z013','Z019','Z021','Z031','Z032','Z033','Z034','Z035','Z036','Z039','Z041','Z042','Z043','Z044','Z045','Z046','Z047','Z048','Z049','Z050','Z061','Z062','Z063','Z069','Z071','Z072','Z073','Z074','Z075','Z076','Z078','Z079','Z091','Z092','Z093','Z094','Z099','Z111','Z112','Z113','Z119','Z121','Z122','Z123','Z124','Z131','Z132','Z133','Z134','Z141','Z142','Z151','Z152','Z180','Z999','B161','B162','B169','B999','R028']
+};
+var WG_LOOKUP={};
+Object.keys(WG_MAP).forEach(function(cluster){
+  WG_MAP[cluster].forEach(function(code){ WG_LOOKUP[code]=cluster; });
+});
+function getCluster(row){
+  var wg=String(row['Warengruppe']||'').trim().toUpperCase().slice(0,4);
+  return WG_LOOKUP[wg]||'Sonstige';
+}
+
+// ── LOGO ──────────────────────────────────────────────────
+q('logo-in').onchange=function(e){
+  var f=e.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(ev){
+    q('logo-img').src=ev.target.result;
+    q('logo-img').style.display='block';
+    q('logo-fb').style.display='none';
+  };
+  r.readAsDataURL(f);
+};
+
+// ── SUPABASE LADEN ────────────────────────────────────────
+var SUPABASE_URL = 'https://kclbwtzvdbepyexkfrag.supabase.co';
+var SUPABASE_KEY = 'DEIN_PUBLISHABLE_KEY'; // <-- hier deinen Publishable Key einfügen
+
+async function loadSupabase() {
+  var uz = q('upload-zone');
+  var allRows = [];
+  var page = 0;
+  var pageSize = 1000;
+  try {
+    while(true) {
+      var from = page * pageSize;
+      var to = from + pageSize - 1;
+      var res = await fetch(
+        SUPABASE_URL + '/rest/v1/import?select=*&offset=' + from + '&limit=' + pageSize,
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      var rows = await res.json();
+      if(!rows.length) break;
+      allRows = allRows.concat(rows);
+      if(rows.length < pageSize) break;
+      page++;
+    }
+    if(!allRows.length) throw new Error('Keine Daten gefunden');
+    init(allRows, 'Supabase · import');
+  } catch(err) {
+    uz.innerHTML = '<div style="padding:50px;color:#e30613;text-align:center;font-size:15px">❌ Fehler beim Laden: ' + err.message + '</div>';
+  }
+}
+loadSupabase();
+
+function init(data,fname){
+  _pcMult=null;
+  ALL=data.map(function(row){
+    var clean={};
+    Object.keys(row).forEach(function(k){
+      var key=k.replace(/\s+/g,' ').trim();
+      clean[key]=row[k];
+    });
+    clean['Warengruppen-Cluster']=getCluster(clean);
+    return clean;
+  });
+  q('data-info').textContent=ALL.length.toLocaleString('de-DE')+' Artikel · '+fname;
+  buildFilters();
+  applyFilters();
+  uz.style.display='none';
+  q('dash').style.display='block';
+}
+
+// ── FILTERS ───────────────────────────────────────────────
+var ALL_FCOLS=['Hauptkategorie','Warengruppen-Cluster','Marke','Warengruppe','Farbe','Saison','Zielgruppe','Online_Status','Rahmentyp'];
+function fid(c){ return 'F_'+c.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+function buildFilters(){
+  var fc=q('fc'); fc.innerHTML='';
+  ALL_FCOLS.forEach(function(col,i){
+    if(i===2){
+      var div=document.createElement('div');
+      div.style.cssText='grid-column:1/-1;border-top:1px dashed #e2e6ea;margin:2px 0';
+      fc.appendChild(div);
+    }
+    var vals=[];
+    var seen={};
+    ALL.forEach(function(r){
+      var v=String(r[col]||'').trim();
+      if(v&&!seen[v]){ seen[v]=1; vals.push(v); }
+    });
+    vals.sort();
+    if(!vals.length) return;
+    var d=document.createElement('div'); d.className='cg';
+    var lbl=col==='Warengruppen-Cluster'?'Produktkategorie':col;
+    d.innerHTML='<label>'+lbl+'</label><select id="'+fid(col)+'"><option value="">Alle</option>'+vals.map(function(v){ return '<option>'+v+'</option>'; }).join('')+'</select>';
+    fc.appendChild(d);
+    d.querySelector('select').onchange=applyFilters;
+  });
+  ['sg','sa','se','sm'].forEach(function(id){ q(id).addEventListener('input',applyFilters); });
+}
+
+function gf(col){ var e=q(fid(col)); return e?e.value:''; }
+
+function applyFilters(){
+  var gv=(q('sg').value||'').toLowerCase();
+  var art=(q('sa').value||'').toLowerCase();
+  var ean=(q('se').value||'').toLowerCase();
+  var mod=(q('sm').value||'').toLowerCase();
+  FIL=ALL.filter(function(r){
+    if(art&&String(r['Artikelnummer']||'').toLowerCase().indexOf(art)<0) return false;
+    if(ean&&String(r['EAN']||'').toLowerCase().indexOf(ean)<0) return false;
+    if(mod&&String(r['Modellnummer']||'').toLowerCase().indexOf(mod)<0) return false;
+    for(var i=0;i<ALL_FCOLS.length;i++){
+      var c=ALL_FCOLS[i]; var v=gf(c);
+      if(v&&String(r[c]||'').trim()!==v) return false;
+    }
+    if(gv){ var row=Object.values(r).join(' ').toLowerCase(); if(row.indexOf(gv)<0) return false; }
+    return true;
+  });
+  render();
+}
+
+function resetAll(){
+  ['sg','sa','se','sm'].forEach(function(id){ q(id).value=''; });
+  ALL_FCOLS.forEach(function(c){ var e=q(fid(c)); if(e) e.value=''; });
+  applyFilters();
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function render(){ renderKPIs(); renderCharts(); renderTops(); renderDetail(); }
+
+// ── KPIs ──────────────────────────────────────────────────
+function renderKPIs(){
+  var d=FIL;
+  var u30=sumArr(d.map(function(r){ return N(r['Netto_Umsatz_30_Tage']); }));
+  var u12=sumArr(d.map(function(r){ return N(r['Umsatz_Var']); }));
+  var db =sumArr(d.map(function(r){ return N(r['DB_Var']); }));
+  var dbp=u12>0?(db/u12)*100:0;
+  var a30=sumArr(d.map(function(r){ return N(r['Absatz_30T']); }));
+  var a7 =sumArr(d.map(function(r){ return N(r['Absatz_7T']); }));
+  var a12=sumArr(d.map(function(r){ return N(r['Absatz_Variabel']); }));
+  var lw =sumArr(d.map(function(r){ return N(r['Lagerwert']); }));
+  var rm =avgArr(d.map(function(r){ return N(r['Reichweite MONATE']); }));
+  var ret=avgArr(d.map(function(r){ return N(r['Retourquote']); }))*100;
+  var bst=sumArr(d.map(function(r){ return N(r['Bestand_verfügbar']); }));
+  var inAuftrag=sumArr(d.map(function(r){ return N(r['In Auftrag']); }));
+  var modelle=Object.keys(d.reduce(function(acc,r){ var m=String(r['Modellnummer']||'').trim(); if(m) acc[m]=1; return acc; },{})).length;
+  var mom=a30>0?(a7/(a30/4.33))*100:0;
+  var momTxt=mom>110?('▲ '+fmtN(mom,0)+'% Momentum'):mom>90?'→ Stabil':('▼ '+fmtN(mom,0)+'%');
+  var momCls=mom>110?'up':mom>90?'neu':'dn';
+
+  var kpis=[
+    {l:'Umsatz 30 Tage',     v:fmtE(u30),             s:'Netto Umsatz',           c:'var(--red)'},
+    {l:'Umsatz 12 Monate',   v:fmtE(u12),             s:'Umsatz Variabel',        c:'var(--red)'},
+    {l:'Deckungsbeitrag',    v:fmtE(db),              s:'Summe DB_Var (€)',       c:'var(--green)'},
+    {l:'Ø DB-Marge',         v:fmtP(dbp),             s:'DB / Umsatz berechnet',  c:dbp>30?'var(--green)':dbp>15?'var(--amber)':'var(--red)'},
+    {l:'Absatz 30 Tage',     v:fmtN(a30)+' Stk.',     s:'7T: '+fmtN(a7)+' Stück', c:'var(--blue)',tr:momTxt,tc:momCls},
+    {l:'Absatz 12 Monate',   v:fmtN(a12)+' Stk.',     s:'Absatz_Variabel',        c:'var(--blue)'},
+    {l:'Lagerwert',          v:fmtE(lw),              s:'Gesamter Lagerwert',     c:'var(--amber)'},
+    {l:'Ø Lagerreichweite',  v:fmtN(rm,1)+' Monate',  s:'Reichweite MONATE',      c:rm>6?'var(--red)':rm>3?'var(--amber)':'var(--green)'},
+    {l:'Ø Retourquote',      v:fmtP(ret),             s:'Retourquote',            c:ret>10?'var(--red)':ret>5?'var(--amber)':'var(--green)'},
+    {l:'Bestand_verfügbar',  v:fmtN(bst),             s:'Stück gesamt',           c:'var(--blue)'},
+    {l:'Menge in Auftrag',   v:fmtN(inAuftrag),       s:'In Auftrag',             c:'var(--amber)'},
+    {l:'Modelle',            v:fmtN(modelle),          s:'verschiedene Modellnr.', c:'var(--muted)'},
+    {l:'Artikel',            v:fmtN(d.length),         s:'gefilterte Datensätze',  c:'var(--muted)'},
+  ];
+  q('kg').innerHTML=kpis.map(function(k){
+    return '<div class="kpi" style="--c:'+k.c+'">'+
+      '<div class="kpi-accent"></div>'+
+      '<div class="kpi-lbl">'+k.l+'</div>'+
+      '<div class="kpi-val">'+k.v+'</div>'+
+      '<div class="kpi-sub">'+k.s+'</div>'+
+      (k.tr?'<div class="kpi-tr '+k.tc+'">'+k.tr+'</div>':'')+
+      '</div>';
+  }).join('');
+}
+
+// ── CHARTS ────────────────────────────────────────────────
+var BASE={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#1f2937',titleColor:'#f9fafb',bodyColor:'#d1d5db',padding:10,cornerRadius:8}}
+};
+var xAx={grid:{display:false},ticks:{color:'#9ca3af',font:{size:11}}};
+var yAx={grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',font:{size:11}}};
+
+function mk(id,cfg){ if(CH[id]) CH[id].destroy(); CH[id]=new Chart(q(id),cfg); }
+
+function grpBy(data,key,valCol){
+  var m={};
+  data.forEach(function(r){
+    var k=String(r[key]||'').trim()||'(k.A.)';
+    if(!m[k]) m[k]=0;
+    m[k]+=N(r[valCol]);
+  });
+  return Object.keys(m).map(function(k){ return {k:k,v:m[k]}; }).sort(function(a,b){ return b.v-a.v; });
+}
+
+function renderCharts(){
+  var br=grpBy(FIL,'Marke','Umsatz_Var').slice(0,12);
+  mk('cBrands',{type:'bar',
+    data:{labels:br.map(function(b){ return b.k; }),datasets:[{data:br.map(function(b){ return b.v; }),backgroundColor:PAL,borderRadius:6,borderSkipped:false}]},
+    options:Object.assign({},BASE,{scales:{x:xAx,y:Object.assign({},yAx,{ticks:Object.assign({},yAx.ticks,{callback:function(v){ return '€'+fmtN(v/1000,0)+'k'; }})})},
+      plugins:Object.assign({},BASE.plugins,{tooltip:Object.assign({},BASE.plugins.tooltip,{callbacks:{label:function(c){ return '€ '+fmtN(c.raw,0); }}})})})
+  });
+
+  var wg=grpBy(FIL,'Warengruppe','Netto_Umsatz_30_Tage').slice(0,10);
+  mk('cWG',{type:'bar',
+    data:{labels:wg.map(function(b){ return b.k; }),datasets:[{data:wg.map(function(b){ return b.v; }),backgroundColor:PAL.slice(1),borderRadius:6,borderSkipped:false}]},
+    options:Object.assign({},BASE,{indexAxis:'y',scales:{x:Object.assign({},yAx,{ticks:Object.assign({},yAx.ticks,{callback:function(v){ return '€'+fmtN(v/1000,0)+'k'; }})}),y:xAx},
+      plugins:Object.assign({},BASE.plugins,{tooltip:Object.assign({},BASE.plugins.tooltip,{callbacks:{label:function(c){ return '€ '+fmtN(c.raw,0); }}})})})
+  });
+
+  var mm=buildMM(FIL);
+  var models=Object.values(mm);
+  var trend=models.filter(function(m){ return m.a30>2&&m.a7>0; })
+    .map(function(m){ return Object.assign({},m,{mom:(m.a7/(m.a30/4.33))*100}); })
+    .sort(function(a,b){ return b.mom-a.mom; }).slice(0,15);
+
+  mk('cTrend',{type:'bar',
+    data:{
+      labels:trend.map(function(m){ return m.bez.length>22?m.bez.slice(0,20)+'…':m.bez; }),
+      datasets:[{data:trend.map(function(m){ return m.mom; }),
+        backgroundColor:trend.map(function(m){ return m.mom>110?'#16a34a':m.mom>90?'#d97706':'#e30613'; }),
+        borderRadius:4,borderSkipped:false}]
+    },
+    options:Object.assign({},BASE,{scales:{
+      x:Object.assign({},xAx,{ticks:Object.assign({},xAx.ticks,{font:{size:9},maxRotation:35})}),
+      y:Object.assign({},yAx,{title:{display:true,text:'% vs. 30T-Ø',color:'#9ca3af',font:{size:10}}})
+    },plugins:Object.assign({},BASE.plugins,{tooltip:Object.assign({},BASE.plugins.tooltip,{callbacks:{label:function(c){ return 'Momentum: '+fmtN(c.raw,0)+'%'; }}})})})
+  });
+
+  var top10=models.slice().sort(function(a,b){ return b.u12-a.u12; }).slice(0,10);
+  mk('cComp',{type:'bar',
+    data:{
+      labels:top10.map(function(m){ return m.bez.length>18?m.bez.slice(0,16)+'…':m.bez; }),
+      datasets:[
+        {label:'7 Tage',   data:top10.map(function(m){ return m.a7; }),  backgroundColor:'#2563eb',borderRadius:4,borderSkipped:false},
+        {label:'30 Tage',  data:top10.map(function(m){ return m.a30; }), backgroundColor:'#d97706',borderRadius:4,borderSkipped:false},
+        {label:'12 Monate',data:top10.map(function(m){ return m.a12; }), backgroundColor:'#7c3aed',borderRadius:4,borderSkipped:false},
+      ]
+    },
+    options:Object.assign({},BASE,{scales:{
+      x:Object.assign({},xAx,{ticks:Object.assign({},xAx.ticks,{font:{size:9},maxRotation:35})}),
+      y:yAx
+    },plugins:Object.assign({},BASE.plugins,{legend:{display:true,labels:{color:'#6b7280',font:{size:11},boxWidth:12,padding:16}}})})
+  });
+}
+
+// ── MODEL MAP ─────────────────────────────────────────────
+function buildMM(data){
+  var m={};
+  data.forEach(function(r){
+    var k=String(r['Modellnummer']||'').trim()||String(r['Bezeichnung']||'').trim();
+    if(!m[k]) m[k]={bez:String(r['Bezeichnung']||'').trim(),marke:String(r['Marke']||'').trim(),u12:0,u30:0,a12:0,a30:0,a7:0,db:0};
+    m[k].u12+=N(r['Umsatz_Var']);
+    m[k].u30+=N(r['Netto_Umsatz_30_Tage']);
+    m[k].a12+=N(r['Absatz_Variabel']);
+    m[k].a30+=N(r['Absatz_30T']);
+    m[k].a7 +=N(r['Absatz_7T']);
+    m[k].db +=N(r['DB_Var']);
+  });
+  // Marge = SUM(DB) / SUM(Umsatz) — kein Durchschnitt, nicht durch Nullvarianten verzerrt
+  Object.values(m).forEach(function(v){ v.marge=calcMarge(v.db,v.u12); });
+  return m;
+}
+
+// ── TOP TABLES ────────────────────────────────────────────
+function renderTops(){
+  var mm=buildMM(FIL);
+  var rows=Object.values(mm);
+  function fill(arr,tid){
+    var html=arr.map(function(r,i){
+      var bdgCls=r.marge>30?'bg':r.marge>0?'bx':'br';
+      return '<tr>'+
+        '<td><span class="rk r'+(i+1)+'">'+(i+1)+'</span></td>'+
+        '<td class="ell" style="max-width:135px" title="'+r.bez+'">'+r.bez+'</td>'+
+        '<td style="color:var(--muted)">'+r.marke+'</td>'+
+        '<td style="font-weight:700;white-space:nowrap">'+fmtE(r.u12)+'</td>'+
+        '<td>'+fmtN(r.a12)+'</td>'+
+        '<td><span class="bdg '+bdgCls+'">'+fmtP(r.marge)+'</span></td>'+
+        '</tr>';
+    }).join('');
+    document.querySelector('#'+tid+' tbody').innerHTML=html||'<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:16px">Keine Daten</td></tr>';
+  }
+  fill(rows.slice().sort(function(a,b){ return b.u12-a.u12; }).slice(0,10),'tU');
+  fill(rows.slice().sort(function(a,b){ return b.a12-a.a12; }).slice(0,10),'tA');
+  fill(rows.filter(function(r){ return r.u12>0; }).sort(function(a,b){ return b.marge-a.marge; }).slice(0,10),'tM');
+}
+
+// ── DETAIL TABLE ──────────────────────────────────────────
+function renderDetail(){
+  var data=FIL.slice();
+  if(sortC){
+    data.sort(function(a,b){
+      var av=N(a[sortC]),bv=N(b[sortC]);
+      if(av||bv) return (av-bv)*sortD;
+      return String(a[sortC]||'').localeCompare(String(b[sortC]||''))*sortD;
+    });
+  }
+  q('rcnt').textContent=fmtN(data.length)+' Artikel';
+
+  function ob(v){
+    var s=String(v||'').trim().toLowerCase();
+    if(s==='1'||s==='aktiv'||s==='online'||s==='ja') return '<span class="bdg bg">Online</span>';
+    if(s==='0'||s==='inaktiv'||s==='offline'||s==='nein') return '<span class="bdg br">Offline</span>';
+    return v?'<span class="bdg bx">'+v+'</span>':'—';
+  }
+
+  var html=data.map(function(r){
+    var u=N(r['Umsatz_Var']);
+    var db=N(r['DB_Var']);
+    var u30=N(r['Netto_Umsatz_30_Tage']);
+    var dbPct=calcMarge(db, u>0?u:u30);
+    var bdgCls=dbPct>30?'bg':dbPct>0?'bx':'br';
+    return '<tr>'+
+      '<td style="white-space:nowrap;color:var(--muted)">'+String(r['Artikelnummer']||'')+'</td>'+
+      '<td class="ell" style="max-width:160px" title="'+String(r['Bezeichnung']||'')+'">'+String(r['Bezeichnung']||'')+'</td>'+
+      '<td style="color:var(--muted)">'+String(r['Modellnummer']||'')+'</td>'+
+      '<td><strong>'+String(r['Marke']||'')+'</strong></td>'+
+      '<td>'+String(r['Farbe']||'')+'</td>'+
+      '<td>'+String(r['Warengruppe']||'')+'</td>'+
+      '<td style="white-space:nowrap">'+fmtE(u30)+'</td>'+
+      '<td style="white-space:nowrap;font-weight:700">'+fmtE(u)+'</td>'+
+      '<td style="text-align:right">'+fmtN(N(r['Absatz_30T']))+'</td>'+
+      '<td style="text-align:right">'+fmtN(N(r['Absatz_Variabel']))+'</td>'+
+      '<td style="text-align:right">'+fmtN(N(r['Absatz_7T']))+'</td>'+
+      '<td><span class="bdg '+bdgCls+'">'+fmtP(dbPct)+'</span></td>'+
+      '<td style="white-space:nowrap">'+fmtE(N(r['Lagerwert']))+'</td>'+
+      '<td style="text-align:right">'+fmtN(N(r['Bestand_verfügbar']))+'</td>'+
+      '<td>'+ob(r['Online_Status'])+'</td>'+
+      '</tr>';
+  }).join('');
+  document.querySelector('#tD tbody').innerHTML=html||'<tr><td colspan="15" style="text-align:center;color:#9ca3af;padding:24px">Keine Daten</td></tr>';
+}
+
+// ── SORT ──────────────────────────────────────────────────
+document.querySelector('#tD thead').addEventListener('click',function(e){
+  var th=e.target.closest('th'); if(!th||!th.dataset.c) return;
+  var col=th.dataset.c;
+  if(sortC===col) sortD*=-1; else{ sortC=col; sortD=-1; }
+  document.querySelectorAll('#tD thead th').forEach(function(t){ t.className=t.classList.contains('S')?'S':''; });
+  th.className='S '+(sortD===1?'sa':'sd');
+  renderDetail();
+});
+
+// ── COLLAPSE ──────────────────────────────────────────────
+function toggleDet(){
+  detOpen=!detOpen;
+  var b=q('detBody'),ch=q('chev');
+  if(detOpen){
+    b.style.maxHeight=b.scrollHeight+'px';
+    ch.classList.add('open');
+    setTimeout(function(){ b.style.maxHeight=''; },350);
+  } else {
+    b.style.maxHeight=b.scrollHeight+'px';
+    requestAnimationFrame(function(){ b.style.maxHeight='0'; });
+    ch.classList.remove('open');
+  }
+}
+
+// ── CSV EXPORT ────────────────────────────────────────────
+function dlCSV(){
+  if(!FIL.length) return;
+  var cols=Object.keys(ALL[0]);
+  function esc(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }
+  var lines=[cols.map(esc).join(';')];
+  FIL.forEach(function(r){ lines.push(cols.map(function(c){ return esc(r[c]); }).join(';')); });
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'}));
+  a.download='fahrrad_xxl_export.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
