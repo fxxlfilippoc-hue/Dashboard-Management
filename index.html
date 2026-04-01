@@ -96,6 +96,7 @@ th.S{cursor:pointer}.S:hover{color:var(--red)}
 .S::after{content:' ↕';opacity:.25;font-size:9px}
 .sa::after{content:' ↑';opacity:1;color:var(--red)}.sd::after{content:' ↓';opacity:1;color:var(--red)}
 ::-webkit-scrollbar{width:5px;height:5px}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 ::-webkit-scrollbar-track{background:#f1f1f1}
 ::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
 </style>
@@ -398,23 +399,32 @@ function buildFilters(){
 
 function gf(col){ var e=q(fid(col)); return e?e.value:''; }
 
+function showLoading(on){
+  var el=q('loading-indicator');
+  if(el) el.style.display=on?'flex':'none';
+}
+
 function applyFilters(){
-  var gv=(q('sg').value||'').toLowerCase();
-  var art=(q('sa').value||'').toLowerCase();
-  var ean=(q('se').value||'').toLowerCase();
-  var mod=(q('sm').value||'').toLowerCase();
-  FIL=ALL.filter(function(r){
-    if(art&&String(r['Artikelnummer']||'').toLowerCase().indexOf(art)<0) return false;
-    if(ean&&String(r['EAN']||'').toLowerCase().indexOf(ean)<0) return false;
-    if(mod&&String(r['Modellnummer']||'').toLowerCase().indexOf(mod)<0) return false;
-    for(var i=0;i<ALL_FCOLS.length;i++){
-      var c=ALL_FCOLS[i]; var v=gf(c);
-      if(v&&String(r[c]||'').trim()!==v) return false;
-    }
-    if(gv){ var row=Object.values(r).join(' ').toLowerCase(); if(row.indexOf(gv)<0) return false; }
-    return true;
-  });
-  render();
+  showLoading(true);
+  setTimeout(function(){
+    var gv=(q('sg').value||'').toLowerCase();
+    var art=(q('sa').value||'').toLowerCase();
+    var ean=(q('se').value||'').toLowerCase();
+    var mod=(q('sm').value||'').toLowerCase();
+    FIL=ALL.filter(function(r){
+      if(art&&String(r['Artikelnummer']||'').toLowerCase().indexOf(art)<0) return false;
+      if(ean&&String(r['EAN']||'').toLowerCase().indexOf(ean)<0) return false;
+      if(mod&&String(r['Modellnummer']||'').toLowerCase().indexOf(mod)<0) return false;
+      for(var i=0;i<ALL_FCOLS.length;i++){
+        var c=ALL_FCOLS[i]; var v=gf(c);
+        if(v&&String(r[c]||'').trim()!==v) return false;
+      }
+      if(gv){ var row=Object.values(r).join(' ').toLowerCase(); if(row.indexOf(gv)<0) return false; }
+      return true;
+    });
+    render();
+    showLoading(false);
+  }, 30);
 }
 
 function resetAll(){
