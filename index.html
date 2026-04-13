@@ -255,6 +255,7 @@ function checkPw(){
               <th class="S" data-c="DB_Var">DB Marge</th>
               <th class="S" data-c="Lagerwert">Lagerwert</th>
               <th class="S" data-c="Bestand_verfügbar">Bestand</th>
+              <th class="S" data-c="In_Auftrag">Im Auftrag</th>
               <th data-c="Online_Status">Status</th>
             </tr></thead>
             <tbody></tbody>
@@ -639,10 +640,11 @@ function renderDetail(){
       '<td><span class="bdg '+bdgCls+'">'+fmtP(dbPct)+'</span></td>'+
       '<td style="white-space:nowrap">'+fmtE(N(r['Lagerwert']))+'</td>'+
       '<td style="text-align:right">'+fmtN(N(r['Bestand_verfügbar']))+'</td>'+
+      '<td style="text-align:right">'+fmtN(N(r['In_Auftrag']))+'</td>'+
       '<td>'+ob(r['Online_Status'])+'</td>'+
       '</tr>';
   }).join('');
-  document.querySelector('#tD tbody').innerHTML=html||'<tr><td colspan="15" style="text-align:center;color:#9ca3af;padding:24px">Keine Daten</td></tr>';
+  document.querySelector('#tD tbody').innerHTML=html||'<tr><td colspan="16" style="text-align:center;color:#9ca3af;padding:24px">Keine Daten</td></tr>';
 }
 
 // ── SORT ──────────────────────────────────────────────────
