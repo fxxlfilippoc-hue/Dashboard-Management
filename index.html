@@ -40,14 +40,16 @@ header{background:#fff;border-bottom:1px solid var(--border);padding:12px 28px;d
 .gap{margin-bottom:16px}
 .sec-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--subtle);margin-bottom:10px}
 .ctrl{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)}
-.row1{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end}
+.row1{display:flex;gap:8px;margin-bottom:12px;flex-wrap:nowrap;align-items:flex-end;overflow-x:auto}
 .row2{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.cg label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px}
-.cg input,.cg select{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;background:#fff;color:var(--text);font-size:13px;outline:none;transition:.15s}
+.cg label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px}
+.cg input,.cg select{width:100%;padding:6px 9px;border:1.5px solid var(--border);border-radius:7px;background:#fff;color:var(--text);font-size:12px;outline:none;transition:.15s}
 .cg input:focus,.cg select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,6,19,.08)}
-.cg-w{flex:2;min-width:200px}.cg-m{flex:1;min-width:130px}
-.btn-rst{padding:8px 16px;background:#f9fafb;border:1.5px solid var(--border);border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap;font-weight:500}
+.cg-w{flex:1.8;min-width:140px}.cg-m{flex:1;min-width:100px}
+.btn-rst{padding:6px 12px;background:#f9fafb;border:1.5px solid var(--border);border-radius:7px;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap;font-weight:500}
 .btn-rst:hover{background:#f3f4f6;color:var(--text)}
+.btn-search{padding:6px 16px;background:var(--red);border:none;border-radius:7px;font-size:12px;color:#fff;cursor:pointer;white-space:nowrap;font-weight:600}
+.btn-search:hover{background:#c8000f}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
 .kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);position:relative;overflow:hidden;transition:.15s}
 .kpi:hover{box-shadow:var(--sh2);transform:translateY(-1px)}
@@ -170,7 +172,10 @@ function checkPw(){
         <div class="cg cg-m"><label>Artikelnummer</label><input id="sa" placeholder="z.B. 10001"></div>
         <div class="cg cg-m"><label>EAN</label><input id="se" placeholder="z.B. 40545…"></div>
         <div class="cg cg-m"><label>Modellnummer</label><input id="sm" placeholder="z.B. CUBE-RHP500"></div>
-        <button class="btn-rst" onclick="resetAll()">↺ Zurücksetzen</button>
+        <div style="display:flex;flex-direction:column;justify-content:flex-end;gap:5px">
+          <button class="btn-search" onclick="applyFilters()">🔍 Suchen</button>
+          <button class="btn-rst" onclick="resetAll()">↺ Zurücksetzen</button>
+        </div>
       </div>
       <div class="row2" id="fc"></div>
     </div>
@@ -399,7 +404,7 @@ function buildFilters(){
     fc.appendChild(d);
     d.querySelector('select').onchange=applyFilters;
   });
-  ['sg','sa','se','sm'].forEach(function(id){ q(id).addEventListener('input',applyFilters); });
+  ['sg','sa','se','sm'].forEach(function(id){ q(id).addEventListener('keydown',function(e){ if(e.key==='Enter') applyFilters(); }); });
 }
 
 function gf(col){ var e=q(fid(col)); return e?e.value:''; }
