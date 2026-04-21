@@ -930,16 +930,16 @@ function renderBstTop10(){
   var mrkBst=top10(byMarke,'bst');
   var catA12=top10(byCat,'a12');
 
-  function barCard(title, data, valLabel, filterType){
+  // Store click data for event delegation
+  window._bstTop10Data = {mrkA12: mrkA12, mrkBst: mrkBst, catA12: catA12};
+
+  function barCard(title, data, valLabel, filterType, cardClass){
     if(!data.length) return '';
     var max=data[0].val||1;
     var bars=data.map(function(d,i){
       var pct=Math.round(d.val/max*100);
-      var onclick='';
-      if(filterType==='marke') onclick='bstSetMarke('+JSON.stringify(d.name)+')';
-      var hoverAttrs=filterType ? ' onmouseover="this.style.background=\'#f3f4f6\'" onmouseout="this.style.background=\'\'"' : '';
-      var cursorStyle=filterType ? 'cursor:pointer;' : '';
-      return '<div onclick="'+onclick+'" style="display:flex;align-items:center;gap:8px;padding:4px 0;'+cursorStyle+'border-radius:4px"'+hoverAttrs+'>'+
+      var clickable=filterType==='marke';
+      return '<div class="bst-bar-row'+(clickable?' bst-bar-click':'')+'" data-marke="'+(clickable?encodeURIComponent(d.name):'')+'" style="display:flex;align-items:center;gap:8px;padding:5px 4px;border-radius:5px;'+(clickable?'cursor:pointer;':'')+'">'+
         '<div style="width:110px;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)" title="'+d.name+'">'+d.name+'</div>'+
         '<div style="flex:1;background:#f3f4f6;border-radius:4px;height:16px;overflow:hidden">'+
           '<div style="height:16px;width:'+pct+'%;background:'+(i===0?'var(--red)':i<3?'#f97316':'#94a3b8')+';border-radius:4px;transition:width .3s"></div>'+
@@ -948,14 +948,28 @@ function renderBstTop10(){
       '</div>';
     }).join('');
     return '<div style="background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)">'+
-      '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">'+title+(filterType?' <span style="font-size:10px;font-weight:500;color:var(--blue)">klickbar</span>':'')+' <span style="font-weight:400;font-size:11px">— '+valLabel+'</span></div>'+
+      '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">'+
+        title+(filterType==='marke'?' <span style="font-size:10px;font-weight:500;color:var(--blue);background:#eff6ff;padding:1px 6px;border-radius:10px">klickbar ↗</span>':'')+
+        ' <span style="font-weight:400;font-size:11px">— '+valLabel+'</span>'+
+      '</div>'+
       bars+'</div>';
   }
 
-  document.getElementById('bst-top10').innerHTML=
+  var top10El=document.getElementById('bst-top10');
+  top10El.innerHTML=
     barCard('Top 10 Marken — VK Menge', mrkA12, 'Absatz 12M', 'marke')+
     barCard('Top 10 Marken — Bestand', mrkBst, 'Stück', 'marke')+
     barCard('Top 10 Kategorien — VK Menge', catA12, 'Absatz 12M', '');
+
+  // Attach real click listeners (not inline onclick)
+  top10El.querySelectorAll('.bst-bar-click').forEach(function(el){
+    el.addEventListener('mouseenter', function(){ this.style.background='#f3f4f6'; });
+    el.addEventListener('mouseleave', function(){ this.style.background=''; });
+    el.addEventListener('click', function(){
+      var marke=decodeURIComponent(this.getAttribute('data-marke'));
+      bstSetMarke(marke);
+    });
+  });
 }
 
 function bstSetMarke(marke){
