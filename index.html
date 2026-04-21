@@ -40,16 +40,14 @@ header{background:#fff;border-bottom:1px solid var(--border);padding:12px 28px;d
 .gap{margin-bottom:16px}
 .sec-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--subtle);margin-bottom:10px}
 .ctrl{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)}
-.row1{display:flex;gap:8px;margin-bottom:12px;flex-wrap:nowrap;align-items:flex-end;overflow-x:auto}
+.row1{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end}
 .row2{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.cg label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px}
-.cg input,.cg select{width:100%;padding:6px 9px;border:1.5px solid var(--border);border-radius:7px;background:#fff;color:var(--text);font-size:12px;outline:none;transition:.15s}
+.cg label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px}
+.cg input,.cg select{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;background:#fff;color:var(--text);font-size:13px;outline:none;transition:.15s}
 .cg input:focus,.cg select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,6,19,.08)}
-.cg-w{flex:1.8;min-width:140px}.cg-m{flex:1;min-width:100px}
-.btn-rst{padding:6px 12px;background:#f9fafb;border:1.5px solid var(--border);border-radius:7px;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap;font-weight:500}
+.cg-w{flex:2;min-width:200px}.cg-m{flex:1;min-width:130px}
+.btn-rst{padding:8px 16px;background:#f9fafb;border:1.5px solid var(--border);border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap;font-weight:500}
 .btn-rst:hover{background:#f3f4f6;color:var(--text)}
-.btn-search{padding:6px 16px;background:var(--red);border:none;border-radius:7px;font-size:12px;color:#fff;cursor:pointer;white-space:nowrap;font-weight:600}
-.btn-search:hover{background:#c8000f}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
 .kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);position:relative;overflow:hidden;transition:.15s}
 .kpi:hover{box-shadow:var(--sh2);transform:translateY(-1px)}
@@ -147,13 +145,22 @@ function checkPw(){
       <div class="t2">Deutschlands größte Auswahl</div>
     </div>
     <div class="hdr-div"></div>
-    <span class="hdr-ttl">Management Dashboard</span>
+    <div class="tab-nav" id="tabNav">
+      <button class="tab-btn active" onclick="switchTab('dashboard')" id="tab-dashboard">Management Dashboard</button>
+      <button class="tab-btn" onclick="switchTab('bestand')" id="tab-bestand">Bestandsanalyse Fahrräder</button>
+    </div>
   </div>
   <div class="hdr-r">
     <span id="data-info">Keine Daten geladen</span>
-    
   </div>
 </header>
+<style>
+.tab-nav{display:flex;gap:4px;align-items:center}
+.tab-btn{padding:7px 18px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap}
+.tab-btn:hover{border-color:#aaa;color:var(--text)}
+.tab-btn.active{background:var(--red);color:#fff;border-color:var(--red)}
+#bestand-view{display:none}
+</style>
 
 <div class="wrap">
   <div id="upload-zone">
@@ -166,16 +173,74 @@ function checkPw(){
     <span style="font-size:18px;animation:spin 1s linear infinite;display:inline-block">⏳</span>
     <span>Wird geladen…</span>
   </div>
+
+  <!-- ── BESTAND VIEW ──────────────────────────── -->
+  <div id="bestand-view">
+    <div class="ctrl gap" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+      <div class="cg" style="min-width:200px">
+        <label>Filter Zielgruppe</label>
+        <select id="bst-zg"><option value="">Alle</option></select>
+      </div>
+      <div class="cg" style="min-width:160px">
+        <label>🔴 Zu viel ab (Monate)</label>
+        <input type="number" id="bst-thresh-high" value="6" min="1" max="36" step="0.5" style="width:100%">
+      </div>
+      <div class="cg" style="min-width:160px">
+        <label>🟢 Zu wenig unter (Monate)</label>
+        <input type="number" id="bst-thresh-low" value="2" min="0.5" max="12" step="0.5" style="width:100%">
+      </div>
+      <div class="cg" style="min-width:160px">
+        <label>🔵 Potential Trend-Faktor</label>
+        <input type="number" id="bst-trend-factor" value="1.2" min="1" max="3" step="0.1" style="width:100%">
+      </div>
+      <button class="btn-rst" onclick="renderBestand()">↻ Aktualisieren</button>
+      <button class="btn-rst" onclick="dlBestandCSV()" style="margin-left:4px">⬇ CSV Export</button>
+    </div>
+
+    <div class="kpi-grid gap" id="bst-kpis"></div>
+
+    <div class="sec-lbl" style="margin-top:4px">Bestandsstatus nach Warengruppe + Zielgruppe — Fahrräder (F0xx) + E-Bikes (F1xx)</div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)">
+      <div style="overflow-x:auto">
+        <table id="tBestand" style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr id="bst-thead">
+              <th class="bst-th bst-s" data-c="wg_zg" style="min-width:160px">Warengruppe · Zielgruppe</th>
+              <th class="bst-th bst-s" data-c="bestand">Bestand</th>
+              <th class="bst-th bst-s" data-c="in_auftrag">In Auftrag</th>
+              <th class="bst-th bst-s" data-c="offen">Offen (Zugang)</th>
+              <th class="bst-th bst-s" data-c="gesamt_verf">Gesamt verfügbar</th>
+              <th class="bst-th bst-s" data-c="a7">Absatz 7T</th>
+              <th class="bst-th bst-s" data-c="a30">Absatz 30T</th>
+              <th class="bst-th bst-s" data-c="a12">Absatz 12M</th>
+              <th class="bst-th bst-s" data-c="rw_bestand">RW Bestand (M)</th>
+              <th class="bst-th bst-s" data-c="rw_gesamt">RW inkl. Zugang (M)</th>
+              <th class="bst-th" style="min-width:110px">Status</th>
+            </tr>
+          </thead>
+          <tbody id="bst-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;padding:10px 14px;background:#f9fafb;border-radius:8px;font-size:12px;color:var(--muted)">
+      <strong>Legende:</strong>&nbsp;
+      <span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;margin:0 4px">🔴 Zu viel</span> RW Bestand &gt; Schwellwert oben &nbsp;|&nbsp;
+      <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;margin:0 4px">🟢 Zu wenig</span> RW Bestand &lt; Schwellwert unten &nbsp;|&nbsp;
+      <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;margin:0 4px">🟡 OK</span> Im Zielbereich &nbsp;|&nbsp;
+      <span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;margin:0 4px">🔵 Potential</span> 7T-Trend &gt; Faktor × 30T-Ø, aber Bestand niedrig
+      <br><br>
+      <strong>Reichweite (RW):</strong> Bestand / (Absatz_30T / 30 × 30) = Bestand / Ø Monatsabsatz. RW inkl. Zugang = (Bestand + Offen) / Ø Monatsabsatz.
+    </div>
+  </div>
+  <!-- ── END BESTAND VIEW ──────────────────────── -->
     <div class="ctrl gap">
       <div class="row1">
         <div class="cg cg-w"><label>🔍 Globale Suche</label><input id="sg" placeholder="Suche in allen Spalten…"></div>
         <div class="cg cg-m"><label>Artikelnummer</label><input id="sa" placeholder="z.B. 10001"></div>
         <div class="cg cg-m"><label>EAN</label><input id="se" placeholder="z.B. 40545…"></div>
         <div class="cg cg-m"><label>Modellnummer</label><input id="sm" placeholder="z.B. CUBE-RHP500"></div>
-        <div style="display:flex;flex-direction:column;justify-content:flex-end;gap:5px">
-          <button class="btn-search" onclick="applyFilters()">🔍 Suchen</button>
-          <button class="btn-rst" onclick="resetAll()">↺ Zurücksetzen</button>
-        </div>
+        <button class="btn-rst" onclick="resetAll()">↺ Zurücksetzen</button>
       </div>
       <div class="row2" id="fc"></div>
     </div>
@@ -404,7 +469,7 @@ function buildFilters(){
     fc.appendChild(d);
     d.querySelector('select').onchange=applyFilters;
   });
-  ['sg','sa','se','sm'].forEach(function(id){ q(id).addEventListener('keydown',function(e){ if(e.key==='Enter') applyFilters(); }); });
+  ['sg','sa','se','sm'].forEach(function(id){ q(id).addEventListener('input',applyFilters); });
 }
 
 function gf(col){ var e=q(fid(col)); return e?e.value:''; }
@@ -429,7 +494,7 @@ function applyFilters(){
         var c=ALL_FCOLS[i]; var v=gf(c);
         if(v&&String(r[c]||'').trim()!==v) return false;
       }
-      if(gv){ var SEARCH_COLS=['Artikelnummer','Modellnummer','Marke','Farbe','Warengruppe','EAN','Hauptkategorie','Saison','Zielgruppe','Online_Status','Rahmentyp']; var row=SEARCH_COLS.map(function(c){ return String(r[c]||''); }).join(' ').toLowerCase(); if(row.indexOf(gv)<0) return false; }
+      if(gv){ var row=Object.values(r).join(' ').toLowerCase(); if(row.indexOf(gv)<0) return false; }
       return true;
     });
     render();
@@ -689,6 +754,210 @@ function dlCSV(){
   a.download='fahrrad_xxl_export.csv';
   a.click();
 }
+
+// ── TAB SWITCHING ─────────────────────────────────────────
+var activeTab='dashboard';
+function switchTab(tab){
+  activeTab=tab;
+  document.getElementById('tab-dashboard').classList.toggle('active',tab==='dashboard');
+  document.getElementById('tab-bestand').classList.toggle('active',tab==='bestand');
+  // Dashboard content: all children of #dash except bestand-view and loading-indicator
+  var dashChildren=document.querySelectorAll('#dash > *:not(#bestand-view):not(#loading-indicator)');
+  dashChildren.forEach(function(el,i){
+    var k=el.id||('el'+i);
+    if(tab==='dashboard'){
+      el.style.display=(window._dashOrig&&window._dashOrig[k])||'';
+    } else {
+      if(!window._dashOrig) window._dashOrig={};
+      if(window._dashOrig[k]===undefined) window._dashOrig[k]=el.style.display||'';
+      el.style.display='none';
+    }
+  });
+  document.getElementById('bestand-view').style.display=tab==='bestand'?'block':'none';
+  if(tab==='bestand' && ALL.length>0) renderBestand();
+}
+
+// ── BESTAND ANALYSE ───────────────────────────────────────
+var bstSortC='rw_bestand', bstSortD=-1;
+
+function isFahrradWG(wg){
+  return /^F[01]/i.test(String(wg||'').trim());
+}
+
+function buildBestandData(){
+  var threshHigh=parseFloat(document.getElementById('bst-thresh-high').value)||6;
+  var threshLow=parseFloat(document.getElementById('bst-thresh-low').value)||2;
+  var trendFactor=parseFloat(document.getElementById('bst-trend-factor').value)||1.2;
+  var zgFilter=document.getElementById('bst-zg').value;
+
+  var groups={};
+  ALL.forEach(function(r){
+    var wg=String(r['Warengruppe']||'').trim();
+    if(!isFahrradWG(wg)) return;
+    var zg=String(r['Zielgruppe']||'').trim()||'(k.A.)';
+    if(zgFilter && zg!==zgFilter) return;
+    var key=wg+' · '+zg;
+    if(!groups[key]) groups[key]={wg:wg,zg:zg,key:key,bestand:0,in_auftrag:0,offen:0,a7:0,a30:0,a12:0};
+    var g=groups[key];
+    g.bestand+=N(r['Bestand_verfügbar']);
+    g.in_auftrag+=N(r['In_Auftrag']);
+    g.offen+=N(r['offen']);
+    g.a7+=N(r['Absatz_7T']);
+    g.a30+=N(r['Absatz_30T']);
+    g.a12+=N(r['Absatz_Variabel']);
+  });
+
+  return Object.values(groups).map(function(g){
+    var avgMonthly=g.a30; // already monthly unit (30 days)
+    g.gesamt_verf=g.bestand+g.offen;
+    g.rw_bestand=avgMonthly>0?+(g.bestand/avgMonthly).toFixed(2):null;
+    g.rw_gesamt=avgMonthly>0?+((g.bestand+g.offen)/avgMonthly).toFixed(2):null;
+    // Determine status
+    var avgDay=g.a30/30;
+    var trendDay=g.a7/7;
+    var rwRef=g.rw_gesamt; // Ampel basiert auf Bestand + Offen (Zukunft einbezogen)
+    var potential=trendDay>(avgDay*trendFactor)&&(rwRef!==null&&rwRef<=threshLow+1);
+    if(rwRef===null){ g.status='keine Daten'; g.statusCode=0; }
+    else if(potential){ g.status='Potential'; g.statusCode=3; }
+    else if(rwRef>threshHigh){ g.status='Zu viel'; g.statusCode=4; }
+    else if(rwRef<threshLow){ g.status='Zu wenig'; g.statusCode=1; }
+    else { g.status='OK'; g.statusCode=2; }
+    return g;
+  });
+}
+
+function populateBestandZG(){
+  var seen={};
+  ALL.forEach(function(r){
+    var wg=String(r['Warengruppe']||'').trim();
+    if(!isFahrradWG(wg)) return;
+    var zg=String(r['Zielgruppe']||'').trim();
+    if(zg&&!seen[zg]){ seen[zg]=1; }
+  });
+  var sel=document.getElementById('bst-zg');
+  var current=sel.value;
+  sel.innerHTML='<option value="">Alle</option>';
+  Object.keys(seen).sort().forEach(function(zg){
+    var o=document.createElement('option');
+    o.value=zg; o.textContent=zg;
+    if(zg===current) o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function statusBadge(s){
+  var map={
+    'Zu viel':['#fee2e2','#b91c1c','🔴'],
+    'Zu wenig':['#dcfce7','#15803d','🟢'],
+    'OK':['#fef3c7','#92400e','🟡'],
+    'Potential':['#dbeafe','#1e40af','🔵'],
+    'keine Daten':['#f3f4f6','#6b7280','—']
+  };
+  var m=map[s]||map['keine Daten'];
+  return '<span style="background:'+m[0]+';color:'+m[1]+';padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap">'+m[2]+' '+s+'</span>';
+}
+
+function renderBestand(){
+  if(!ALL.length) return;
+  populateBestandZG();
+  var rows=buildBestandData();
+
+  // Sort
+  rows.sort(function(a,b){
+    var av=a[bstSortC], bv=b[bstSortC];
+    if(av===null&&bv===null) return 0;
+    if(av===null) return 1; if(bv===null) return -1;
+    if(typeof av==='string') return av.localeCompare(bv)*bstSortD;
+    return (av-bv)*bstSortD;
+  });
+
+  // KPIs
+  var total=rows.length;
+  var tooMany=rows.filter(function(r){ return r.status==='Zu viel'; }).length;
+  var tooFew=rows.filter(function(r){ return r.status==='Zu wenig'; }).length;
+  var potential=rows.filter(function(r){ return r.status==='Potential'; }).length;
+  var ok=rows.filter(function(r){ return r.status==='OK'; }).length;
+  var totalBestand=rows.reduce(function(s,r){ return s+r.bestand; },0);
+  var totalOffen=rows.reduce(function(s,r){ return s+r.offen; },0);
+
+  document.getElementById('bst-kpis').innerHTML=[
+    {l:'Warengruppen',v:fmtN(total),s:'Fahrrad WG+ZG Gruppen',c:'var(--muted)'},
+    {l:'🔴 Zu viel',v:fmtN(tooMany),s:'Überbestand',c:'var(--red)'},
+    {l:'🟢 Zu wenig',v:fmtN(tooFew),s:'Unterbestand / Nachorder',c:'var(--green)'},
+    {l:'🔵 Potential',v:fmtN(potential),s:'Trend > Schnitt, Bestand niedrig',c:'var(--blue)'},
+    {l:'🟡 OK',v:fmtN(ok),s:'Im Zielbereich',c:'var(--amber)'},
+    {l:'Bestand gesamt',v:fmtN(totalBestand)+' Stk.',s:'Verfügbarer Bestand',c:'var(--blue)'},
+    {l:'Offene Zugänge',v:fmtN(totalOffen)+' Stk.',s:'Noch zu liefern',c:'var(--amber)'},
+  ].map(function(k){
+    return '<div class="kpi" style="--c:'+k.c+'"><div class="kpi-accent"></div><div class="kpi-lbl">'+k.l+'</div><div class="kpi-val">'+k.v+'</div><div class="kpi-sub">'+k.s+'</div></div>';
+  }).join('');
+
+  // Table
+  var html=rows.map(function(r){
+    var rwB=r.rw_bestand!==null?fmtN(r.rw_bestand,1)+' M':'—';
+    var rwG=r.rw_gesamt!==null?fmtN(r.rw_gesamt,1)+' M':'—';
+    // Color RW cell
+    var thH=parseFloat(document.getElementById('bst-thresh-high').value)||6;
+    var thL=parseFloat(document.getElementById('bst-thresh-low').value)||2;
+    var rwBStyle='';
+    if(r.rw_gesamt!==null){
+      if(r.rw_gesamt>thH) rwBStyle='color:#b91c1c;font-weight:700';
+      else if(r.rw_gesamt<thL) rwBStyle='color:#15803d;font-weight:700';
+    }
+    return '<tr>'+
+      '<td style="font-weight:600;white-space:nowrap">'+r.key+'</td>'+
+      '<td style="text-align:right">'+fmtN(r.bestand)+'</td>'+
+      '<td style="text-align:right;color:var(--muted)">'+fmtN(r.in_auftrag)+'</td>'+
+      '<td style="text-align:right;color:var(--amber)">'+fmtN(r.offen)+'</td>'+
+      '<td style="text-align:right;font-weight:600">'+fmtN(r.gesamt_verf)+'</td>'+
+      '<td style="text-align:right">'+fmtN(r.a7)+'</td>'+
+      '<td style="text-align:right">'+fmtN(r.a30)+'</td>'+
+      '<td style="text-align:right">'+fmtN(r.a12)+'</td>'+
+      '<td style="text-align:right;'+rwBStyle+'">'+rwB+'</td>'+
+      '<td style="text-align:right;color:var(--muted)">'+rwG+'</td>'+
+      '<td>'+statusBadge(r.status)+'</td>'+
+      '</tr>';
+  }).join('');
+  document.querySelector('#tBestand tbody').innerHTML=html||'<tr><td colspan="11" style="text-align:center;color:#9ca3af;padding:24px">Keine Fahrrad-Daten</td></tr>';
+}
+
+// Sort for bestand table
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelector('#bst-thead').addEventListener('click',function(e){
+    var th=e.target.closest('th');
+    if(!th||!th.dataset.c) return;
+    var col=th.dataset.c;
+    if(bstSortC===col) bstSortD*=-1; else{ bstSortC=col; bstSortD=-1; }
+    document.querySelectorAll('#bst-thead th').forEach(function(t){ t.style.color=''; });
+    th.style.color='var(--red)';
+    renderBestand();
+  });
+});
+
+// Bestand CSV export
+function dlBestandCSV(){
+  var rows=buildBestandData();
+  if(!rows.length) return;
+  var cols=['Warengruppe','Zielgruppe','Bestand','In_Auftrag','Offen','Gesamt_verfügbar','Absatz_7T','Absatz_30T','Absatz_12M','RW_Bestand_Monate','RW_inkl_Zugang_Monate','Status'];
+  function esc(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }
+  var lines=[cols.map(esc).join(';')];
+  rows.forEach(function(r){
+    lines.push([r.wg,r.zg,r.bestand,r.in_auftrag,r.offen,r.gesamt_verf,r.a7,r.a30,r.a12,
+      r.rw_bestand!==null?r.rw_bestand:'',r.rw_gesamt!==null?r.rw_gesamt:'',r.status
+    ].map(esc).join(';'));
+  });
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'}));
+  a.download='fahrrad_bestand_analyse.csv';
+  a.click();
+}
 </script>
+<style>
+.bst-th{text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:10px 10px 10px;border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer}
+.bst-th:hover{color:var(--red)}
+#tBestand tbody td{padding:9px 10px;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+#tBestand tbody tr:hover td{background:#f9fafb}
+#tBestand tbody tr:last-child td{border-bottom:none}
+</style>
 </body>
 </html>
