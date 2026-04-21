@@ -429,7 +429,7 @@ function applyFilters(){
         var c=ALL_FCOLS[i]; var v=gf(c);
         if(v&&String(r[c]||'').trim()!==v) return false;
       }
-      if(gv){ var row=Object.values(r).join(' ').toLowerCase(); if(row.indexOf(gv)<0) return false; }
+      if(gv){ var SEARCH_COLS=['Artikelnummer','Modellnummer','Marke','Farbe','Warengruppe','EAN','Hauptkategorie','Saison','Zielgruppe','Online_Status','Rahmentyp']; var row=SEARCH_COLS.map(function(c){ return String(r[c]||''); }).join(' ').toLowerCase(); if(row.indexOf(gv)<0) return false; }
       return true;
     });
     render();
